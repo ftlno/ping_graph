@@ -1,11 +1,32 @@
 var m = require('moment');
-var str = "Thu Oct  2 08:48:41 2015 64 bytes from 10.0.30.22: icmp_seq=7482 ttl=126 time=43.8 ms";
+var fs = require('fs');
+var timestamps = [];
 
-var dateRegex = /\w{3}\s+[0-9]{1,2}\s+[0-2][0-9]:[0-5][0-9]:[0-5][0-9]\s+[0-9]{4}/
-var dateParser = str.match(dateRegex);
+var dateRegex = /\w{3}\s+[0-9]{1,2}\s+[0-2][0-9]:[0-5][0-9]:[0-5][0-9]\s+[0-9]{4}/;
+var timeRegex = /time=([0-9]{1,4}\.[0-9]{1})/;
 
-var dateStr = dateParser[0].replace(/\s+/, ' ');
-var dateParsed = m(dateStr, 'MMM DD hh:mm:ss YYYY');
+var parseFile = function(callback) {
+    fs.readFile('ping.txt', 'utf8', function(err, contents) {
+        var array = contents.toString().split("\n");
+        var arrayLength = array.length;
 
-console.log(dateStr);
-console.log(dateParsed.toString());
+        for (var i = 0; i < arrayLength; i++) {
+            var timestamp = array[i].toString().match(timeRegex);
+            timestamps.push(timestamp);
+        }
+
+        callback();
+    });
+};
+
+var renderTimestamps = function() {
+    var timestampsLength = timestamps.length;
+    for (var i = 0; i < timestampsLength; i++) {
+        if (timestamps[i] !== null) {
+            var ping = Number(timestamps[i][1]);
+            console.log(ping);
+        }
+    }
+};
+
+parseFile(renderTimestamps);
