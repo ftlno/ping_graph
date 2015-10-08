@@ -7,3 +7,12 @@ app.get('/', function(req, res) {
 });
 
 app.listen(3000);
+
+var sys = require('util');
+var exec = require('child_process').exec;
+
+function puts(error, stdout, stderr) {
+	sys.puts(stdout)
+}
+
+exec("ping localhost", puts);
