@@ -1,4 +1,5 @@
 var app = require('express')();
+var path = require('path');
 var util = require('util');
 var exec = require('child_process').exec;
 var moment = require('moment');
@@ -66,6 +67,12 @@ function compare(a, b) {
 
 
 // Express API
+
+app.get('/', function(req, res) {
+    res.sendFile(path.join(__dirname + '/index.html'));
+});
+
+
 app.get('/data', function(request, response) {
 	db.find({}, function (err, docs) {
 		if (err) {
@@ -87,6 +94,14 @@ app.get('/last24hours', function(request, response) {
 		docs.sort(compare);
 		response.end(JSON.stringify(docs));
 	});
+});
+
+app.get('/delete', function(request, response) {
+	if (request.query.secret === process.env.DELETE_SECRET) {
+		db.remove({}, {multi: true}, function (err, numRemoved) {
+			console.log(numRemoved + " entries deleted.")
+		});
+	}
 });
 
 app.listen(3000);
