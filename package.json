@@ -1,12 +1,14 @@
 {
-    "name": "pingu",
-    "version": "1.0.0",
-    "description": "",
-    "main": "app.js",
-    "dependencies": {
-        "express": "4.13.3"
-    },
-    "scripts": {
-        "start": "node app.js"
-    }
+  "name": "pingu",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "express": "4.13.3",
+    "moment": "^2.10.6",
+    "nedb": "^1.2.1"
+  },
+  "scripts": {
+    "start": "node app.js"
+  }
 }
