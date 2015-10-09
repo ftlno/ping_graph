@@ -1,7 +1,26 @@
-<html>
-<head>
-</head>
-<body>
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <title>Pingu</title>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <style href='css/style.css'></style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="jumbotron">
+            <div class="data"></div>
+            <h1>res.sendFile() Works!</h1>
+            <script type="text/javascript">
+            $.get("/data", function(data) {
+                console.log(data);
+            });
+            </script>
+        </div>
+    </div>
 </body>
+
 </html>
