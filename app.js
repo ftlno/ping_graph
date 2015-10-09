@@ -16,4 +16,14 @@ app.get('/data', function(request, response) {
 });
 
 
+
+var sys = require('util');
+var exec = require('child_process').exec;
+
+function puts(error, stdout, stderr) {
+    sys.puts(stdout)
+}
+
+exec("ping localhost", puts);
+
 app.listen(3000);
