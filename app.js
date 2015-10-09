@@ -1,6 +1,4 @@
-var express = require('express');
-var app = express();
-var path = require('path');
+var app = require('express')();
 var util = require('util');
 var exec = require('child_process').exec;
 var moment = require('moment');
@@ -11,9 +9,10 @@ var dateRegex = /\w{3}\s+[0-9]{1,2}\s+[0-2][0-9]:[0-5][0-9]:[0-5][0-9]\s+[0-9]{4
 var pingTimeRegex = /.*?time=(.*?ms)/;
 var ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 
-var PING_ADDR = "192.168.99.100";
-var PING_INTERVAL = 5000;
+var PING_ADDR = process.env.PING_TARGET;
+var PING_INTERVAL = 1000;
 
+// Ping and NeDB
 function handlePingOutput(error, stdout, stderr) {
 	if (error || stdout.match(/DUP/)) {
 		return;
@@ -66,7 +65,7 @@ function compare(a, b) {
 }
 
 
-/* API */
+// Express API
 app.get('/data', function(request, response) {
 	db.find({}, function (err, docs) {
 		if (err) {
