@@ -11,6 +11,7 @@ var dateRegex = /\w{3}\s+[0-9]{1,2}\s+[0-2][0-9]:[0-5][0-9]:[0-5][0-9]\s+[0-9]{4
 var pingTimeRegex = /.*?time=(.*?ms)/;
 var ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 
+var PING_ADDR = "192.168.99.100";
 var PING_INTERVAL = 5000;
 
 function handlePingOutput(error, stdout, stderr) {
@@ -51,7 +52,7 @@ var savePingObjToDatabase = function(objToSave) {
 
 
 setInterval(function() {
-	exec("ping -c 1 www.vg.no | perl -nle 'BEGIN {$|++} print scalar(localtime), \" \", $_' ", handlePingOutput);
+	exec("ping -c 1 " + PING_ADDR + " | perl -nle 'BEGIN {$|++} print scalar(localtime), \" \", $_' ", handlePingOutput);
 }, PING_INTERVAL);
 
 function compare(a, b) {
