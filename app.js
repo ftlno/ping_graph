@@ -68,8 +68,11 @@ function compare(a, b) {
 
 // Express API
 
-app.get('/', function(req, res) {
-    res.sendFile(path.join(__dirname + '/index.html'));
+app.use(express.static(path.join(__dirname, 'html')));
+
+app.get('/', function(request, response) {
+	response.sendfile(html_dir + 'index.html');
+    //response.sendFile(path.join(__dirname + '/index.html'));
 });
 
 
@@ -104,4 +107,4 @@ app.get('/delete', function(request, response) {
 	}
 });
 
-app.listen(5000);
+app.listen(3000);
