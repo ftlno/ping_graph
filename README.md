@@ -35,9 +35,9 @@ All data currently in the database is accessible from here.
 All data from the last 24 hours currently in the database is accessible from here.
 
 ##### /reset
-Used to reset the database and store the current DB as a log file. Query strings required
+Used to reset the database and store the current DB as a log file. Query strings required.
 Example, goto: ```http://pingu.bekk/reset?secret=hemmelig```
 	
 ##### /newtarget
-Used to point the app to another IP address. It also resets the database and stores the current DB as a log file. Query strings required
+Used to point the app to another IP address. It also resets the database and stores the current DB as a log file. Query strings are required.
 Example, goto: ```http://pingu.bekk/newtarget?secret=hemmelig&target=db.no```
