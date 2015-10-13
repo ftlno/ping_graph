@@ -6,6 +6,8 @@
   "dependencies": {
     "express": "4.13.3",
     "moment": "^2.10.6",
+    "jsdom" : "*",
+    "d3" : "*",
     "nedb": "^1.2.1"
   },
   "scripts": {
