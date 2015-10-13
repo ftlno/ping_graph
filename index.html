@@ -14,8 +14,6 @@
     <ul id="drops"></ul>
     <script>
     $(document).ready(function() {
-        document.getElementById('visualisation').setAttribute("width", AXIS_WIDTH);
-        document.getElementById('visualisation').setAttribute("height", AXIS_HEIGHT);
         $.get("/data", function(body) {
             parseFile(JSON.parse(body));
         });
