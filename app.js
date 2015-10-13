@@ -138,10 +138,12 @@ app.get('/reset', function(request, response) {
     if (request.query.secret === process.env.SECRET) {
 		stopTimer();
 		var filename = saveBackup();
-		fs.unlinkSync("pings.db");
-		startTimer();
-		console.log("Starting pinging " + PING_ADDR);
-		response.end("Starting pinging " + PING_ADDR + ". Backup saved in " + filename);
+		db.remove({}, { multi: true }, function (err, numRemoved) {
+			fs.unlinkSync("pings.db");
+			startTimer();
+			console.log("Starting pinging " + PING_ADDR);
+			response.end("Starting pinging " + PING_ADDR + ". Backup saved in " + filename);
+		});
     } else {
 		response.end("Wrong secret password.");
 	}
@@ -153,10 +155,12 @@ app.get('/newtarget', function(request, response) {
 			var filename = saveBackup();
 	        process.env.PING_TARGET = request.query.target;
 			PING_ADDR = process.env.PING_TARGET;
-			fs.unlinkSync("pings.db");
-			startTimer();
-			console.log("Starting pinging " + PING_ADDR);
-			response.end("Starting pinging " + PING_ADDR + ". Backup saved in " + filename);
+			db.remove({}, { multi: true }, function (err, numRemoved) {
+				fs.unlinkSync("pings.db");
+				startTimer();
+				console.log("Starting pinging " + PING_ADDR);
+				response.end("Starting pinging " + PING_ADDR + ". Backup saved in " + filename);
+			});
     } else {
     	response.end("Wrong secret password og no specified target");
     }
