@@ -104,12 +104,22 @@ app.get('/last24hours', function(request, response) {
 });
 
 app.get('/delete', function(request, response) {
-    if (request.query.secret === process.env.DELETE_SECRET) {
+    if (request.query.secret === process.env.SECRET) {
         db.remove({}, {
             multi: true
         }, function(err, numRemoved) {
             console.log(numRemoved + " entries deleted.")
         });
+    }
+});
+
+app.get('/setup', function(request, response) {
+    if (request.query.secret === process.env.SECRET) {
+        process.env.PING_TARGET = request.query.target;
+		PING_ADDR = process.env.PING_TARGET;
+		console.log("Changed ping target to " + PING_ADDR);
+    } else {
+    	console.log("Wrong secret password - will not change ping target");
     }
 });
 
