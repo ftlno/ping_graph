@@ -3,7 +3,8 @@ var path = require('path');
 var util = require('util');
 var exec = require('child_process').exec;
 var moment = require('moment');
-var fs = require('fs-sync');
+var fsSync = require('fs-sync');
+var fs = require('fs');
 var Datastore = require('nedb');
 var db = new Datastore({
     filename: 'pings.db',
@@ -83,7 +84,21 @@ app.get('/', function(request, response) {
 });
 
 app.get('/logs', function(request, response) {
-	response.sendFile(path.join(__dirname + '/pings.txt'));
+	var returnHtml = "<ul>";
+	var files = fs.readdirSync('.');
+	for (var i = 0; i < files.length; i++) {
+		if (files[i].endsWith('.txt')) {
+			returnHtml += ('<li><a href="' + files[i] + '"> ' + files[i] + '</a></li>');
+		}
+	}
+	returnHtml += "</ul>";
+	response.writeHead(200, {'Content-Type': 'text/html','Content-Length':returnHtml.length});
+	response.write(returnHtml);
+	response.end();
+});
+
+app.get('/*.txt', function(request, response) {
+    response.sendFile(path.join(__dirname + '/' + request.url));
 });
 
 app.get('/data', function(request, response) {
@@ -116,7 +131,7 @@ app.get('/last24hours', function(request, response) {
 app.get('/reset', function(request, response) {
     if (request.query.secret === process.env.SECRET) {
 		stopTimer();
-		saveBackup();
+		var filename = saveBackup();
         db.remove({}, {
             multi: true
         }, function(err, numRemoved) {
@@ -124,7 +139,7 @@ app.get('/reset', function(request, response) {
         });
 		startTimer();
 		console.log("Starting pinging " + PING_ADDR);
-		response.end("Starting pinging " + PING_ADDR);
+		response.end("Starting pinging " + PING_ADDR + ". Backup saved in " + filename);
     } else {
 		response.end("Wrong secret password.");
 	}
@@ -133,7 +148,7 @@ app.get('/reset', function(request, response) {
 app.get('/newtarget', function(request, response) {
     if (request.query.secret === process.env.SECRET && request.query.target) {
 			stopTimer();
-			saveBackup();
+			var filename = saveBackup();
 	        process.env.PING_TARGET = request.query.target;
 			PING_ADDR = process.env.PING_TARGET;
 	        db.remove({}, {
@@ -143,7 +158,7 @@ app.get('/newtarget', function(request, response) {
 	        });
 			startTimer();
 			console.log("Starting pinging " + PING_ADDR);
-			response.end("Starting pinging " + PING_ADDR);
+			response.end("Starting pinging " + PING_ADDR + ". Backup saved in " + filename);
     } else {
     	response.end("Wrong secret password og no specified target");
     }
@@ -151,13 +166,14 @@ app.get('/newtarget', function(request, response) {
 
 function saveBackup() {
 	var backupFilename = getUniqueBackupFilename();
-	fs.copy("pings.db", backupFilename,{});
+	fsSync.copy("pings.db", backupFilename,{});
 	console.log("Log saved in " + getUniqueBackupFilename());
+	return backupFilename;
 }
 
 function getUniqueBackupFilename() {
 	var filename = "pings" + parseInt(Math.random()*100000) + ".txt";
-	while (fs.exists(filename)) {
+	while (fsSync.exists(filename)) {
 		filename = "pings" + parseInt(Math.random()*100000) + ".txt";
 	}
 	return filename;
