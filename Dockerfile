@@ -3,7 +3,6 @@ COPY . /app
 WORKDIR /app
 RUN \
 	rm -rf node_modules; \
-	npm install; \
-	rm pings.db
+	npm install
 EXPOSE 5000
 CMD npm start

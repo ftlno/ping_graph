@@ -86,10 +86,16 @@ app.get('/', function(request, response) {
 app.get('/logs', function(request, response) {
 	var returnHtml = "<ul>";
 	var files = fs.readdirSync('.');
+	var logsExist = false;
 	for (var i = 0; i < files.length; i++) {
 		if (files[i].endsWith('.txt')) {
 			returnHtml += ('<li><a href="' + files[i] + '"> ' + files[i] + '</a></li>');
+			logsExist = true;
 		}
+	}
+	if (!logsExist) {
+		response.end("There are not saved any logs.");
+		return;
 	}
 	returnHtml += "</ul>";
 	response.writeHead(200, {'Content-Type': 'text/html','Content-Length':returnHtml.length});
@@ -132,11 +138,7 @@ app.get('/reset', function(request, response) {
     if (request.query.secret === process.env.SECRET) {
 		stopTimer();
 		var filename = saveBackup();
-        db.remove({}, {
-            multi: true
-        }, function(err, numRemoved) {
-            console.log("Database reset");
-        });
+		fs.unlinkSync("pings.db");
 		startTimer();
 		console.log("Starting pinging " + PING_ADDR);
 		response.end("Starting pinging " + PING_ADDR + ". Backup saved in " + filename);
@@ -151,11 +153,7 @@ app.get('/newtarget', function(request, response) {
 			var filename = saveBackup();
 	        process.env.PING_TARGET = request.query.target;
 			PING_ADDR = process.env.PING_TARGET;
-	        db.remove({}, {
-	            multi: true
-	        }, function(err, numRemoved) {
-	            console.log("Database reset");
-	        });
+			fs.unlinkSync("pings.db");
 			startTimer();
 			console.log("Starting pinging " + PING_ADDR);
 			response.end("Starting pinging " + PING_ADDR + ". Backup saved in " + filename);
@@ -172,11 +170,14 @@ function saveBackup() {
 }
 
 function getUniqueBackupFilename() {
-	var filename = "pings" + parseInt(Math.random()*100000) + ".txt";
-	while (fsSync.exists(filename)) {
-		filename = "pings" + parseInt(Math.random()*100000) + ".txt";
+	var files = fs.readdirSync('.');
+	var counter = 1;
+	for (var i = 0; i < files.length; i++) {
+		if (files[i].startsWith("pings") && files[i].endsWith('.txt')) {
+			counter++;
+		}
 	}
-	return filename;
+	return ("pings" + counter + ".txt");
 }
 
 app.listen(5000);
