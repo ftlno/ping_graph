@@ -56,6 +56,9 @@ function getUnixTimestamp(date) {
 }
 
 function renderChart(data, xStart, xEnd) {
+    document.getElementById('visualisation').setAttribute("width", AXIS_WIDTH);
+    document.getElementById('visualisation').setAttribute("height", AXIS_HEIGHT);
+   
     var timeFormat = d3.time.format("%d %b %H:%M");
     var vis = d3.select("#visualisation"),
         WIDTH = AXIS_WIDTH,
