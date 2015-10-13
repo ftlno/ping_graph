@@ -6,10 +6,6 @@ var AXIS_WIDTH = 3000;
 var DROP_LIMIT_MILLISECONDS = 1000;
 var AXIS_HEIGHT = 500;
 
-function setupDOM() {
-
-}
-
 function parseFile(array) {
     var pings = [];
     var drops = [];
