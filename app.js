@@ -15,8 +15,8 @@ var dateRegex = /\w{3}\s+[0-9]{1,2}\s+[0-2][0-9]:[0-5][0-9]:[0-5][0-9]\s+[0-9]{4
 var pingTimeRegex = /.*?time=(.*?ms)/;
 var ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 
-var PING_ADDR = process.env.PING_TARGET;
-var PING_INTERVAL = 1000;
+var ping_address = process.env.PING_TARGET;
+var ping_interval = 1000;
 var interval;
 
 // Ping and NeDB
@@ -58,8 +58,8 @@ var savePingObjToDatabase = function(objToSave) {
 
 function startTimer() {
 	interval = setInterval(function() {
-	    exec("ping -c 1 " + PING_ADDR + " | perl -nle 'BEGIN {$|++} print scalar(localtime), \" \", $_' ", handlePingOutput);
-	}, PING_INTERVAL);
+	    exec("ping -c 1 " + ping_address + " | perl -nle 'BEGIN {$|++} print scalar(localtime), \" \", $_' ", handlePingOutput);
+	}, ping_interval);
 }
 
 function stopTimer() {
@@ -141,8 +141,8 @@ app.get('/reset', function(request, response) {
 		db.remove({}, { multi: true }, function (err, numRemoved) {
 			fs.unlinkSync("pings.db");
 			startTimer();
-			console.log("Starting pinging " + PING_ADDR);
-			response.end("Starting pinging " + PING_ADDR + ". Backup saved in " + filename);
+			console.log("Starting pinging " + ping_address);
+			response.end("Starting pinging " + ping_address + ". Backup saved in " + filename);
 		});
     } else {
 		response.end("Wrong secret password.");
@@ -154,12 +154,12 @@ app.get('/newtarget', function(request, response) {
 			stopTimer();
 			var filename = saveBackup();
 	        process.env.PING_TARGET = request.query.target;
-			PING_ADDR = process.env.PING_TARGET;
+			ping_address = process.env.PING_TARGET;
 			db.remove({}, { multi: true }, function (err, numRemoved) {
 				fs.unlinkSync("pings.db");
 				startTimer();
-				console.log("Starting pinging " + PING_ADDR);
-				response.end("Starting pinging " + PING_ADDR + ". Backup saved in " + filename);
+				console.log("Starting pinging " + ping_address);
+				response.end("Starting pinging " + ping_address + ". Backup saved in " + filename);
 			});
     } else {
     	response.end("Wrong secret password og no specified target");
