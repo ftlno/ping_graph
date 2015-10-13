@@ -3,6 +3,7 @@ var path = require('path');
 var util = require('util');
 var exec = require('child_process').exec;
 var moment = require('moment');
+var fs = require('fs-sync');
 var Datastore = require('nedb');
 var db = new Datastore({
     filename: 'pings.db',
@@ -15,6 +16,7 @@ var ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 
 var PING_ADDR = process.env.PING_TARGET;
 var PING_INTERVAL = 1000;
+var interval;
 
 // Ping and NeDB
 function handlePingOutput(error, stdout, stderr) {
@@ -53,10 +55,15 @@ var savePingObjToDatabase = function(objToSave) {
     });
 };
 
+function startTimer() {
+	interval = setInterval(function() {
+	    exec("ping -c 1 " + PING_ADDR + " | perl -nle 'BEGIN {$|++} print scalar(localtime), \" \", $_' ", handlePingOutput);
+	}, PING_INTERVAL);
+}
 
-setInterval(function() {
-    exec("ping -c 1 " + PING_ADDR + " | perl -nle 'BEGIN {$|++} print scalar(localtime), \" \", $_' ", handlePingOutput);
-}, PING_INTERVAL);
+function stopTimer() {
+	clearInterval(interval);
+}
 
 function compare(a, b) {
     if (a.unixtime < b.unixtime) {
@@ -75,6 +82,9 @@ app.get('/', function(request, response) {
     response.sendFile(path.join(__dirname + '/index.html'));
 });
 
+app.get('/logs', function(request, response) {
+	response.sendFile(path.join(__dirname + '/pings.txt'));
+});
 
 app.get('/data', function(request, response) {
     db.find({}, function(err, docs) {
@@ -103,24 +113,55 @@ app.get('/last24hours', function(request, response) {
     });
 });
 
-app.get('/delete', function(request, response) {
+app.get('/reset', function(request, response) {
     if (request.query.secret === process.env.SECRET) {
+		stopTimer();
+		saveBackup();
         db.remove({}, {
             multi: true
         }, function(err, numRemoved) {
-            console.log(numRemoved + " entries deleted.")
+            console.log("Database reset");
         });
+		startTimer();
+		console.log("Starting pinging " + PING_ADDR);
+		response.end("Starting pinging " + PING_ADDR);
+    } else {
+		response.end("Wrong secret password.");
+	}
+});
+
+app.get('/newtarget', function(request, response) {
+    if (request.query.secret === process.env.SECRET && request.query.target) {
+			stopTimer();
+			saveBackup();
+	        process.env.PING_TARGET = request.query.target;
+			PING_ADDR = process.env.PING_TARGET;
+	        db.remove({}, {
+	            multi: true
+	        }, function(err, numRemoved) {
+	            console.log("Database reset");
+	        });
+			startTimer();
+			console.log("Starting pinging " + PING_ADDR);
+			response.end("Starting pinging " + PING_ADDR);
+    } else {
+    	response.end("Wrong secret password og no specified target");
     }
 });
 
-app.get('/setup', function(request, response) {
-    if (request.query.secret === process.env.SECRET) {
-        process.env.PING_TARGET = request.query.target;
-		PING_ADDR = process.env.PING_TARGET;
-		console.log("Changed ping target to " + PING_ADDR);
-    } else {
-    	console.log("Wrong secret password - will not change ping target");
-    }
-});
+function saveBackup() {
+	var backupFilename = getUniqueBackupFilename();
+	fs.copy("pings.db", backupFilename,{});
+	console.log("Log saved in " + getUniqueBackupFilename());
+}
+
+function getUniqueBackupFilename() {
+	var filename = "pings" + parseInt(Math.random()*100000) + ".txt";
+	while (fs.exists(filename)) {
+		filename = "pings" + parseInt(Math.random()*100000) + ".txt";
+	}
+	return filename;
+}
 
 app.listen(5000);
+startTimer();

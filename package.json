@@ -4,10 +4,11 @@
   "description": "",
   "main": "app.js",
   "dependencies": {
+    "d3": "*",
     "express": "4.13.3",
+    "fs-sync": "^0.2.6",
+    "jsdom": "*",
     "moment": "^2.10.6",
-    "jsdom" : "*",
-    "d3" : "*",
     "nedb": "^1.2.1"
   },
   "scripts": {
