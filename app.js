@@ -1,188 +1,104 @@
-var app = require('express')();
-var path = require('path');
-var util = require('util');
-var exec = require('child_process').exec;
-var moment = require('moment');
-var fsSync = require('fs-sync');
-var fs = require('fs');
-var Datastore = require('nedb');
-var db = new Datastore({
-    filename: 'pings.db',
-    autoload: true
-});
+var NUMBER_OF_TICKS_ON_X_AXIS = 30;
+var NUMBER_OF_TICKS_ON_Y_AXIS = 10;
+var START_OF_Y_AXIS = 0;
+var END_OF_Y_AXIS = 100;
+var AXIS_WIDTH = 3000;
+var DROP_LIMIT_MILLISECONDS = 1000;
+var AXIS_HEIGHT = 500;
 
-var dateRegex = /\w{3}\s+[0-9]{1,2}\s+[0-2][0-9]:[0-5][0-9]:[0-5][0-9]\s+[0-9]{4}/;
-var pingTimeRegex = /.*?time=(.*?ms)/;
-var ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
+function setupDOM() {
 
-var ping_address = process.env.PING_TARGET;
-var ping_interval = 1000;
-var interval;
-
-// Ping and NeDB
-function handlePingOutput(error, stdout, stderr) {
-    if (error || stdout.match(/DUP/)) {
-        return;
-    }
-
-    try {
-        var line = stdout.split("\n")[1];
-        var date = line.match(dateRegex)[0];
-        var dateInUnixTime = moment(date, 'MMM DD hh:mm:ss YYYY').unix();
-        var ip = line.match(ipRegex)[0];
-        var ping = Number(line.match(pingTimeRegex)[1].split(" ")[0]);
-
-        var pingObjToSave = {
-            "date": date,
-            "unixtime": (dateInUnixTime * 1000),
-            "ip": ip,
-            "ping": ping
-        };
-
-        savePingObjToDatabase(pingObjToSave);
-    } catch (err) {
-        console.log(err);
-    }
 }
 
-
-var savePingObjToDatabase = function(objToSave) {
-    db.insert(objToSave, function(err, newDoc) {
-        if (err) {
-            console.log(err);
-            return;
+function parseFile(array) {
+    var pings = [];
+    var drops = [];
+    var xStart;
+    var xEnd;
+    var drop = false;
+    var arrayLength = array.length;
+    for (var i = 0; i < arrayLength; i++) {
+        var ping = array[i].ping;
+        var dateInUnixTime = array[i].unixtime;
+        if (i < arrayLength - 1) {
+            if (drop) {
+                ping = START_OF_Y_AXIS;
+                drop = false;
+            } else {
+                var nextInUnixTime = array[i + 1].unixtime;
+                if (nextInUnixTime - dateInUnixTime > DROP_LIMIT_MILLISECONDS) {
+                    ping = START_OF_Y_AXIS;
+                    drop = true;
+                    drops.push(array[i].date + " " + array[i].ip);
+                }
+            }
+            if (!xStart) {
+                xStart = dateInUnixTime;
+            }
+            xEnd = dateInUnixTime;
+            pings.push({
+                ping: ping,
+                time: dateInUnixTime
+            });
         }
-        console.log("Ping saved to NeDB");
-    });
-};
-
-function startTimer() {
-	interval = setInterval(function() {
-	    exec("ping -c 1 " + ping_address + " | perl -nle 'BEGIN {$|++} print scalar(localtime), \" \", $_' ", handlePingOutput);
-	}, ping_interval);
-}
-
-function stopTimer() {
-	clearInterval(interval);
-}
-
-function compare(a, b) {
-    if (a.unixtime < b.unixtime) {
-        return -1;
     }
-    if (a.unixtime > b.unixtime) {
-        return 1;
+    renderChart(pings, xStart, xEnd);
+    printDrops(drops);
+}
+
+function printDrops(drops) {
+    for (var i = 0; i < drops.length; i++) {
+        var node = document.createElement("LI");
+        var textNode = document.createTextNode(drops[i]);
+        node.appendChild(textNode);
+        document.getElementById("drops").appendChild(node);
     }
-    return 0;
 }
 
-
-// Express API
-
-app.get('/', function(request, response) {
-    response.sendFile(path.join(__dirname + '/index.html'));
-});
-
-app.get('/logs', function(request, response) {
-	var returnHtml = "<ul>";
-	var files = fs.readdirSync('.');
-	var logsExist = false;
-	for (var i = 0; i < files.length; i++) {
-		if (files[i].endsWith('.txt')) {
-			returnHtml += ('<li><a href="' + files[i] + '"> ' + files[i] + '</a></li>');
-			logsExist = true;
-		}
-	}
-	if (!logsExist) {
-		response.end("There are not saved any logs.");
-		return;
-	}
-	returnHtml += "</ul>";
-	response.writeHead(200, {'Content-Type': 'text/html','Content-Length':returnHtml.length});
-	response.write(returnHtml);
-	response.end();
-});
-
-app.get('/*.txt', function(request, response) {
-    response.sendFile(path.join(__dirname + '/' + request.url));
-});
-
-app.get('/data', function(request, response) {
-    db.find({}, function(err, docs) {
-        if (err) {
-            console.log(err);
-            return;
-        }
-        docs.sort(compare);
-        response.end(JSON.stringify(docs));
-    });
-});
-
-app.get('/last24hours', function(request, response) {
-    var oneDayAgo = moment().subtract(1, 'days').unix() * 1000;
-    db.find({
-        "unixtime": {
-            $gt: oneDayAgo
-        }
-    }, function(err, docs) {
-        if (err) {
-            console.log(err);
-            return;
-        }
-        docs.sort(compare);
-        response.end(JSON.stringify(docs));
-    });
-});
-
-app.get('/reset', function(request, response) {
-    if (request.query.secret === process.env.SECRET) {
-		stopTimer();
-		var filename = saveBackup();
-		db.remove({}, { multi: true }, function (err, numRemoved) {
-			fs.unlinkSync("pings.db");
-			startTimer();
-			console.log("Starting pinging " + ping_address);
-			response.end("Starting pinging " + ping_address + ". Backup saved in " + filename);
-		});
-    } else {
-		response.end("Wrong secret password.");
-	}
-});
-
-app.get('/newtarget', function(request, response) {
-    if (request.query.secret === process.env.SECRET && request.query.target) {
-			stopTimer();
-			var filename = saveBackup();
-	        process.env.PING_TARGET = request.query.target;
-			ping_address = process.env.PING_TARGET;
-			db.remove({}, { multi: true }, function (err, numRemoved) {
-				fs.unlinkSync("pings.db");
-				startTimer();
-				console.log("Starting pinging " + ping_address);
-				response.end("Starting pinging " + ping_address + ". Backup saved in " + filename);
-			});
-    } else {
-    	response.end("Wrong secret password og no specified target");
-    }
-});
-
-function saveBackup() {
-	var backupFilename = getUniqueBackupFilename();
-	fsSync.copy("pings.db", backupFilename,{});
-	console.log("Log saved in " + getUniqueBackupFilename());
-	return backupFilename;
+function getUnixTimestamp(date) {
+    return moment(date, 'MMM DD hh:mm:ss YYYY').unix() * 1000;
 }
 
-function getUniqueBackupFilename() {
-	var files = fs.readdirSync('.');
-	var counter = 1;
-	for (var i = 0; i < files.length; i++) {
-		if (files[i].startsWith("pings") && files[i].endsWith('.txt')) {
-			counter++;
-		}
-	}
-	return ("pings" + counter + ".txt");
+function renderChart(data, xStart, xEnd) {
+    var timeFormat = d3.time.format("%d %b %H:%M");
+    var vis = d3.select("#visualisation"),
+        WIDTH = AXIS_WIDTH,
+        HEIGHT = AXIS_HEIGHT,
+        MARGINS = {
+            top: 20,
+            right: 20,
+            bottom: 20,
+            left: 40
+        },
+        xScale = d3.time.scale().range([MARGINS.left, WIDTH - MARGINS.right]).domain([xStart, xEnd]),
+        yScale = d3.scale.linear().range([HEIGHT - MARGINS.top, MARGINS.bottom]).domain([START_OF_Y_AXIS, END_OF_Y_AXIS]),
+        xAxis = d3.svg.axis()
+        .ticks(NUMBER_OF_TICKS_ON_X_AXIS)
+        .scale(xScale)
+        .tickFormat(timeFormat),
+        yAxis = d3.svg.axis()
+        .ticks(NUMBER_OF_TICKS_ON_Y_AXIS)
+        .scale(yScale)
+        .orient("left");
+    vis.append("svg:g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + (HEIGHT - MARGINS.bottom) + ")")
+        .call(xAxis);
+    vis.append("svg:g")
+        .attr("class", "y axis")
+        .attr("transform", "translate(" + (MARGINS.left) + ",0)")
+        .call(yAxis);
+    var lineGen = d3.svg.line()
+        .x(function(d) {
+            return xScale(d.time);
+        })
+        .y(function(d) {
+            return yScale(d.ping);
+        })
+        .interpolate("linear");
+    vis.append('svg:path')
+        .attr('d', lineGen(data))
+        .attr('stroke', '#DF565B')
+        .attr('stroke-width', 1)
+        .attr('fill', 'none');
 }
-
-app.listen(5000);
-startTimer();
