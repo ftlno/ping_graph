@@ -102,6 +102,6 @@ function renderChart(data, xStart, xEnd) {
     vis.append('svg:path')
         .attr('d', lineGen(data))
         .attr('stroke', '#DF565B')
-        .attr('stroke-width', 0.5)
+        .attr('stroke-width', 0.8)
         .attr('fill', 'none');
 }
