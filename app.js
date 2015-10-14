@@ -1,10 +1,10 @@
-var NUMBER_OF_TICKS_ON_X_AXIS = 30;
+var NUMBER_OF_TICKS_ON_X_AXIS = 15;
 var NUMBER_OF_TICKS_ON_Y_AXIS = 10;
 var START_OF_Y_AXIS = 0;
-var END_OF_Y_AXIS = 100;
-var AXIS_WIDTH = 3000;
+var END_OF_Y_AXIS = 200;
+var AXIS_WIDTH = 1350;
 var DROP_LIMIT_MILLISECONDS = 1000;
-var AXIS_HEIGHT = 500;
+var AXIS_HEIGHT = 600;
 
 function parseFile(array) {
     var pings = [];
@@ -58,7 +58,7 @@ function getUnixTimestamp(date) {
 function renderChart(data, xStart, xEnd) {
     document.getElementById('visualisation').setAttribute("width", AXIS_WIDTH);
     document.getElementById('visualisation').setAttribute("height", AXIS_HEIGHT);
-   
+
     var timeFormat = d3.time.format("%d %b %H:%M");
     var vis = d3.select("#visualisation"),
         WIDTH = AXIS_WIDTH,
@@ -74,9 +74,12 @@ function renderChart(data, xStart, xEnd) {
         xAxis = d3.svg.axis()
         .ticks(NUMBER_OF_TICKS_ON_X_AXIS)
         .scale(xScale)
-        .tickFormat(timeFormat),
+        .tickSize(-AXIS_HEIGHT+40, 0, 0)
+
+    .tickFormat(timeFormat),
         yAxis = d3.svg.axis()
         .ticks(NUMBER_OF_TICKS_ON_Y_AXIS)
+        .tickSize(-AXIS_WIDTH+60, 0, 0)
         .scale(yScale)
         .orient("left");
     vis.append("svg:g")
@@ -95,9 +98,10 @@ function renderChart(data, xStart, xEnd) {
             return yScale(d.ping);
         })
         .interpolate("linear");
+
     vis.append('svg:path')
         .attr('d', lineGen(data))
         .attr('stroke', '#DF565B')
-        .attr('stroke-width', 1)
+        .attr('stroke-width', 0.5)
         .attr('fill', 'none');
 }

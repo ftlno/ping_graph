@@ -1,5 +1,5 @@
 .axis text {
-    font-size: 12px;
+    font-size: 8px;
     font: "Times New Roman", serif;
 }
 
@@ -9,4 +9,8 @@
     stroke: grey;
     stroke-width: 1;
     shape-rendering: crispEdges;
+}
+.axis .tick line{
+    stroke: lightgrey;
+    opacity: 0.5;
 }
