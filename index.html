@@ -12,13 +12,6 @@
     <svg id="visualisation"></svg>
     <h2>Drops</h2>
     <ul id="drops"></ul>
-    <script>
-    $(document).ready(function() {
-        $.get("/data", function(body) {
-            parseFile(JSON.parse(body));
-        });
-    });
-    </script>
 </body>
 
 </html>

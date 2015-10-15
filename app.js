@@ -1,9 +1,10 @@
+var chartData;
 
 var NUMBER_OF_TICKS_ON_X_AXIS = 10;
 var NUMBER_OF_TICKS_ON_Y_AXIS = 10;
 var START_OF_Y_AXIS = 0;
 var END_OF_Y_AXIS = 100;
-var AXIS_WIDTH = 1200;
+var AXIS_WIDTH = getSizeOfXAxis();
 var DROP_LIMIT_MILLISECONDS = 1000;
 var AXIS_HEIGHT = 600;
 
@@ -44,6 +45,11 @@ function parseFile(array) {
 }
 
 function printDrops(drops) {
+	var node = document.getElementById('drops');
+	while (node.hasChildNodes()) {
+	    node.removeChild(node.lastChild);
+	}
+	
     for (var i = 0; i < drops.length; i++) {
         var node = document.createElement("LI");
         var textNode = document.createTextNode(drops[i]);
@@ -57,6 +63,11 @@ function getUnixTimestamp(date) {
 }
 
 function renderChart(data, xStart, xEnd) {
+	var node = document.getElementById('visualisation');
+	while (node.hasChildNodes()) {
+	    node.removeChild(node.lastChild);
+	}
+	
     document.getElementById('visualisation').setAttribute("width", AXIS_WIDTH);
     document.getElementById('visualisation').setAttribute("height", AXIS_HEIGHT);
 
@@ -108,3 +119,26 @@ function renderChart(data, xStart, xEnd) {
         .attr('stroke-width', 0.8)
         .attr('fill', 'none');
 }
+
+function getSizeOfXAxis() {
+	return window.innerWidth - 35;
+}
+
+window.onresize = function() {
+	AXIS_WIDTH = getSizeOfXAxis();
+	parseFile(chartData);
+};
+
+var fetchAndParseNewData = function() {
+    $.get("/data", function(body) {
+		chartData = JSON.parse(body);
+		parseFile(chartData);
+    });
+}
+
+$(document).ready(function() {
+    fetchAndParseNewData();
+	setInterval(function() {
+	    fetchAndParseNewData();
+	}, 3000);
+});
