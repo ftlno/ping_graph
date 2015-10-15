@@ -67,7 +67,7 @@ function getHtmlListOfLogFiles() {
     var files = fs.readdirSync('.');
     var counter = 0;
     for (var i = 0; i < files.length; i++) {
-        if (files[i].endsWith('.txt')) {
+        if (files[i].startsWith("Pings from ") && files[i].endsWith('.txt')) {
             returnHtml += ('<li><a href="' + files[i] + '"> ' + files[i] + '</a></li>');
             counter++;
         }
@@ -139,8 +139,8 @@ app.get('/reset', function(request, response) {
     if (request.query.secret === process.env.SECRET) {
         stopTimer();
 		
-		db.saveDatabaseToLogFileAndEmpty(function(backupFilename) {
-			console.log("Starting pinging " + ping_address + ". Backup saved in " + backupFilename);
+		db.saveLogAndWipeDatabase(function(backupFilename) {
+			console.log("Starting pinging " + ping_address + ". Backup saved in '" + backupFilename + "'");
 			startTimer();
 		});
 
@@ -155,8 +155,8 @@ app.get('/newtarget', function(request, response) {
         process.env.PING_TARGET = request.query.target;
         ping_address = process.env.PING_TARGET;
 		
-		db.saveDatabaseToLogFileAndEmpty(function(backupFilename) {
-			console.log("Starting pinging " + ping_address + ". Backup saved in " + backupFilename);
+		db.saveLogAndWipeDatabase(function(backupFilename) {
+			console.log("Starting pinging " + ping_address + ". Backup saved in '" + backupFilename + "'");
 			startTimer();
 		});
 

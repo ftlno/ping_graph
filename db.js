@@ -23,31 +23,19 @@ DBModule.queryDatabase = function(options, callback) {
     db.find(options, callback);
 };
 
-DBModule.saveDatabaseToLogFileAndEmpty = function(callback) {
-	var filename = saveDatabaseBackup();
-	db.remove({}, { multi: true }, function (err, numRemoved) {
-		if(fsSync.exists('pings.db')){
-		    fs.unlinkSync("pings.db");
+DBModule.saveLogAndWipeDatabase = function(callback) {
+	db.find({}).sort({ unixtime: -1 }).exec(function (err, docs) {
+		if (docs[0]) {
+			var backupFilename = "Pings from " + docs[0].date + ".txt";
+			fsSync.copy("pings.db", backupFilename,{});
+			db.remove({}, { multi: true }, function (err, numRemoved) {
+				if(fsSync.exists('pings.db')){
+				    fs.unlinkSync("pings.db");
+				}
+				callback(backupFilename);
+			});
 		}
-		callback(filename);
 	});
-};
-
-var saveDatabaseBackup = function() {
-	var backupFilename = getUniqueBackupFilename();
-	fsSync.copy("pings.db", backupFilename,{});
-	return backupFilename;
-};
-
-var getUniqueBackupFilename = function() {
-	var files = fs.readdirSync('.');
-	var counter = 1;
-	for (var i = 0; i < files.length; i++) {
-		if (files[i].startsWith("pings") && files[i].endsWith('.txt')) {
-			counter++;
-		}
-	}
-	return ("pings" + counter + ".txt");
 };
 
 module.exports = DBModule;
