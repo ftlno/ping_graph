@@ -165,6 +165,16 @@ app.get('/newtarget', function(request, response) {
     }
 });
 
-app.listen(5000);
-console.log("Starting pinging " + ping_address +  " once every " + ping_interval + " milliseconds.");
-startTimer();
+function main() {
+	if (ping_address) {
+		app.listen(5000);
+		console.log("Starting pinging " + ping_address +  " once every " + ping_interval + " milliseconds.");
+		startTimer();
+	} else {
+		console.log("Environment variable PING_TARGET must be set in order to start this application.")
+		process.exit(0);
+	}
+	
+}
+
+main();

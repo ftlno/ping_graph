@@ -5,7 +5,6 @@ var db = new Datastore({
     filename: 'pings.db',
     autoload: true
 });
-//var server = require('./server.js');
 
 var DBModule = {};
 
