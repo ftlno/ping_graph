@@ -62,30 +62,37 @@ function compare(a, b) {
     return 0;
 }
 
+function getHtmlListOfLogFiles() {
+    var returnHtml = "<ul>";
+    var files = fs.readdirSync('.');
+    var counter = 0;
+    for (var i = 0; i < files.length; i++) {
+        if (files[i].endsWith('.txt')) {
+            returnHtml += ('<li><a href="' + files[i] + '"> ' + files[i] + '</a></li>');
+            counter++;
+        }
+    }
+	returnHtml += "</ul>";
+	return {
+		html: returnHtml,
+		number: counter
+	}
+}
 
 // Express API
 app.use('/', express.static(__dirname + '/'));
 
 app.get('/logs', function(request, response) {
-    var returnHtml = "<ul>";
-    var files = fs.readdirSync('.');
-    var logsExist = false;
-    for (var i = 0; i < files.length; i++) {
-        if (files[i].endsWith('.txt')) {
-            returnHtml += ('<li><a href="' + files[i] + '"> ' + files[i] + '</a></li>');
-            logsExist = true;
-        }
-    }
-    if (!logsExist) {
+	var htmlList = getHtmlListOfLogFiles()
+	if (htmlList.number === 0) {
         response.end("There are not saved any logs.");
         return;
-    }
-    returnHtml += "</ul>";
+	}
     response.writeHead(200, {
         'Content-Type': 'text/html',
-        'Content-Length': returnHtml.length
+        'Content-Length': htmlList.html.length
     });
-    response.write(returnHtml);
+    response.write(htmlList.html);
     response.end();
 });
 
@@ -132,7 +139,10 @@ app.get('/reset', function(request, response) {
     if (request.query.secret === process.env.SECRET) {
         stopTimer();
 		
-		db.saveDatabaseToLogFileAndEmpty(startTimer);
+		db.saveDatabaseToLogFileAndEmpty(function(backupFilename) {
+			console.log("Starting pinging " + ping_address + ". Backup saved in " + backupFilename);
+			startTimer();
+		});
 
     } else {
         response.end("Wrong secret password.");
@@ -145,16 +155,16 @@ app.get('/newtarget', function(request, response) {
         process.env.PING_TARGET = request.query.target;
         ping_address = process.env.PING_TARGET;
 		
-		db.saveDatabaseToLogFileAndEmpty(startTimer);
+		db.saveDatabaseToLogFileAndEmpty(function(backupFilename) {
+			console.log("Starting pinging " + ping_address + ". Backup saved in " + backupFilename);
+			startTimer();
+		});
 
     } else {
         response.end("Wrong secret password og no specified target");
     }
 });
 
-module.exports = {
-	ping_address: ping_address
-}
-
 app.listen(5000);
+console.log("Starting pinging " + ping_address +  " once every " + ping_interval + " milliseconds.");
 startTimer();

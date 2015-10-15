@@ -5,7 +5,7 @@ var db = new Datastore({
     filename: 'pings.db',
     autoload: true
 });
-var server = require('./server.js');
+//var server = require('./server.js');
 
 var DBModule = {};
 
@@ -26,17 +26,16 @@ DBModule.queryDatabase = function(options, callback) {
 DBModule.saveDatabaseToLogFileAndEmpty = function(callback) {
 	var filename = saveDatabaseBackup();
 	db.remove({}, { multi: true }, function (err, numRemoved) {
-		fs.unlinkSync("pings.db");
-		console.log("Starting pinging " + server.ping_address);
-		//response.end("Starting pinging " + server.ping_address + ". Backup saved in " + filename);
-		callback();
+		if(fsSync.exists('pings.db')){
+		    fs.unlinkSync("pings.db");
+		}
+		callback(filename);
 	});
 };
 
 var saveDatabaseBackup = function() {
 	var backupFilename = getUniqueBackupFilename();
 	fsSync.copy("pings.db", backupFilename,{});
-	console.log("Log saved in " + getUniqueBackupFilename());
 	return backupFilename;
 };
 
