@@ -140,7 +140,9 @@ app.get('/reset', function(request, response) {
         stopTimer();
 		
 		db.saveLogAndWipeDatabase(function(backupFilename) {
-			console.log("Starting pinging " + ping_address + ". Backup saved in '" + backupFilename + "'");
+			var str = "Starting pinging " + ping_address + ". Backup saved in '" + backupFilename + "'";
+			console.log(str);
+			response.end(str);
 			startTimer();
 		});
 
@@ -156,7 +158,9 @@ app.get('/newtarget', function(request, response) {
         ping_address = process.env.PING_TARGET;
 		
 		db.saveLogAndWipeDatabase(function(backupFilename) {
-			console.log("Starting pinging " + ping_address + ". Backup saved in '" + backupFilename + "'");
+			var str = "Starting pinging " + ping_address + ". Backup saved in '" + backupFilename + "'";
+			console.log(str);
+			response.end(str);
 			startTimer();
 		});
 
