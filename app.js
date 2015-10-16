@@ -1,4 +1,8 @@
 var chartData;
+var pings = [];
+var drops = [];
+var xStart;
+var xEnd;
 
 var NUMBER_OF_TICKS_ON_X_AXIS = 10;
 var NUMBER_OF_TICKS_ON_Y_AXIS = 10;
@@ -9,10 +13,8 @@ var DROP_LIMIT_MILLISECONDS = 1000;
 var AXIS_HEIGHT = 600;
 
 function parseFile(array) {
-    var pings = [];
-    var drops = [];
-    var xStart;
-    var xEnd;
+	pings = [];
+	drops = [];
     var drop = false;
     var arrayLength = array.length;
     for (var i = 0; i < arrayLength; i++) {
@@ -40,7 +42,7 @@ function parseFile(array) {
             });
         }
     }
-    renderChart(pings, xStart, xEnd);
+	renderChart();
     printDrops(drops);
 }
 
@@ -58,11 +60,8 @@ function printDrops(drops) {
     }
 }
 
-function getUnixTimestamp(date) {
-    return moment(date, 'MMM DD hh:mm:ss YYYY').unix() * 1000;
-}
-
-function renderChart(data, xStart, xEnd) {
+function renderChart() {
+	var data = pings;
 	var node = document.getElementById('visualisation');
 	while (node.hasChildNodes()) {
 	    node.removeChild(node.lastChild);
@@ -82,7 +81,7 @@ function renderChart(data, xStart, xEnd) {
             bottom: 20,
             left: 40
         },
-        xScale = d3.time.scale().range([MARGINS.left, WIDTH - MARGINS.right]).domain([xStart, xEnd]),
+        xScale = d3.time.scale().range([MARGINS.left, WIDTH - MARGINS.right]).domain([xEnd-10000, xEnd]),//([xStart, xEnd]),
         yScale = d3.scale.linear().range([HEIGHT - MARGINS.top, MARGINS.bottom]).domain([START_OF_Y_AXIS, END_OF_Y_AXIS]),
         xAxis = d3.svg.axis()
         .ticks(NUMBER_OF_TICKS_ON_X_AXIS)
