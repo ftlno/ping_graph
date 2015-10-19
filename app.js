@@ -9,7 +9,7 @@ var NUMBER_OF_TICKS_ON_Y_AXIS = 10;
 var START_OF_Y_AXIS = 0;
 var END_OF_Y_AXIS = 100;
 var AXIS_WIDTH = getSizeOfXAxis();
-var DROP_LIMIT_MILLISECONDS = 1000;
+var DROP_LIMIT_IN_MILLISECONDS;
 var AXIS_HEIGHT = 600;
 
 function parseFile(array) {
@@ -26,7 +26,7 @@ function parseFile(array) {
                 drop = false;
             } else {
                 var nextInUnixTime = array[i + 1].unixtime;
-                if (nextInUnixTime - dateInUnixTime > DROP_LIMIT_MILLISECONDS) {
+                if (nextInUnixTime - dateInUnixTime > DROP_LIMIT_IN_MILLISECONDS) {
                     ping = START_OF_Y_AXIS;
                     drop = true;
                     drops.push(array[i].date + " " + array[i].ip);
@@ -147,10 +147,13 @@ var fetchAndParseNewData = function() {
 }
 
 $(document).ready(function() {
-    fetchAndParseNewData();
-	setInterval(function() {
+	$.get("/droplimit", function(body) {
+		DROP_LIMIT_IN_MILLISECONDS = parseInt(body);
 	    fetchAndParseNewData();
-	}, 3000);
+		setInterval(function() {
+		    fetchAndParseNewData();
+		}, 3000);
+	});
 });
 
 

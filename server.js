@@ -14,6 +14,7 @@ var ipRegex = /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/;
 
 var ping_address = process.env.PING_TARGET;
 var ping_interval = 1000;
+var drop_limit = process.env.DROP_LIMIT_IN_MILLISECONDS;
 var interval;
 
 // Ping and NeDB
@@ -169,13 +170,17 @@ app.get('/newtarget', function(request, response) {
     }
 });
 
+app.get('/droplimit', function(request, response) {
+	response.end(drop_limit);
+});
+
 function main() {
-	if (ping_address) {
+	if (ping_address && drop_limit) {
 		app.listen(5000);
 		console.log("Starting pinging " + ping_address +  " once every " + ping_interval + " milliseconds.");
 		startTimer();
 	} else {
-		console.log("Environment variable PING_TARGET must be set in order to start this application.")
+		console.log("Environment variable PING_TARGET and DROP_LIMIT_IN_MILLISECONDS must be set in order to start this application.");
 		process.exit(0);
 	}
 	
